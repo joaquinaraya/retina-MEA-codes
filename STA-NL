@@ -1,0 +1,645 @@
+%% DEGU'S RECEPTIVE FILE
+% INITIALIZATION DO NOT EDIT
+function varargout = Degu_Receptive_Field(varargin)
+% DEGU_RECEPTIVE_FIELD MATLAB code for Degu_Receptive_Field.fig
+%      DEGU_RECEPTIVE_FIELD, by itself, creates a new DEGU_RECEPTIVE_FIELD or raises the existing
+%      singleton*.
+%
+%      H = DEGU_RECEPTIVE_FIELD returns the handle to a new DEGU_RECEPTIVE_FIELD or the handle to
+%      the existing singleton*.
+%
+%      DEGU_RECEPTIVE_FIELD('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in DEGU_RECEPTIVE_FIELD.M with the given input arguments.
+%
+%      DEGU_RECEPTIVE_FIELD('Property','Value',...) creates a new DEGU_RECEPTIVE_FIELD or raises the
+%      existing singleton*.  Starting from the left, property value pairs are
+%      applied to the GUI before Degu_Receptive_Field_OpeningFcn gets called.  An
+%      unrecognized property name or invalid value makes property application
+%      stop.  All inputs are passed to Degu_Receptive_Field_OpeningFcn via varargin.
+%
+%      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
+%      instance to run (singleton)".
+%
+% See also: GUIDE, GUIDATA, GUIHANDLES
+
+% Edit the above text to modify the response to help Degu_Receptive_Field
+
+% Last Modified by GUIDE v2.5 15-Jun-2016 21:06:02
+
+% Begin initialization code - DO NOT EDIT
+gui_Singleton = 1;
+gui_State = struct('gui_Name',       mfilename, ...
+                   'gui_Singleton',  gui_Singleton, ...
+                   'gui_OpeningFcn', @Degu_Receptive_Field_OpeningFcn, ...
+                   'gui_OutputFcn',  @Degu_Receptive_Field_OutputFcn, ...
+                   'gui_LayoutFcn',  [] , ...
+                   'gui_Callback',   []);
+if nargin && ischar(varargin{1})
+    gui_State.gui_Callback = str2func(varargin{1});
+end
+
+if nargout
+    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+else
+    gui_mainfcn(gui_State, varargin{:});
+end
+
+
+% End initialization code - DO NOT EDIT
+% --- Executes just before Degu_Receptive_Field is made visible.
+function Degu_Receptive_Field_OpeningFcn(hObject, eventdata, handles, varargin)
+% This function has no output args, see OutputFcn.
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% varargin   command line arguments to Degu_Receptive_Field (see VARARGIN)
+
+% Choose default command line output for Degu_Receptive_Field
+handles.output = hObject;
+
+% Update handles structure
+guidata(hObject, handles);
+
+% This sets up the initial plot - only do when we are invisible
+% so window can get raised using Degu_Receptive_Field.
+
+
+% UIWAIT makes Degu_Receptive_Field wait for user response (see UIRESUME)
+% uiwait(handles.figure1);
+
+% --- Outputs from this function are returned to the command line.
+function varargout = Degu_Receptive_Field_OutputFcn(hObject, eventdata, handles)
+% varargout  cell array for returning output args (see VARARGOUT);
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get default command line output from handles structure
+varargout{1} = handles.output;
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%% END INITIALIZATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PRINCIPAL FUNCTION %%%%%%%%%%%%%%%%%%%%%%%%%%
+% --- Executes on button press in Play.
+function Play_Callback(hObject, eventdata, handles)
+% hObject    handle to Play (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% axes(handles.axes1);
+% axes(handles.axes2);
+% cla;
+%% Initialization Variables
+Start_time=str2double(get(handles.edit1,'String'));
+End_time=str2double(get(handles.edit2,'String'));
+Sample_Rate=str2double(get(handles.edit6,'String'));
+Sample_Projector=str2double(get(handles.edit3,'String'));
+N_Frames=str2double(get(handles.edit5,'String'));
+N_Blocks=str2double(get(handles.edit4,'String'));
+
+
+mem=str2double(get(handles.edit10,'String'));
+
+h = waitbar(0,'Initializing waitbar...');
+
+Confirmation_Upload_Analog=get(handles.checkbox1,'Value');
+Confirmation_Upload_Seed_or_Stimuli=get(handles.checkbox2,'Value');
+Confirmation_Upload_Timestamps=get(handles.checkbox3,'Value');
+Confirmation_Upload_STAdata=get(handles.checkbox9,'Value');
+
+%% ARREGLAR ESTO y otros errores! Cuando me olvido de poner la carpeta alegar!
+
+% separator according to OS
+if isunix
+    sep = '/';
+elseif ispc
+    sep = '\';
+end
+    
+if get(handles.checkbox11,'Value')==0;
+    warndlg('You will use actual Folder','!! Warning !!')
+    Folder=['.',sep];
+else
+    Folder=handles.ruta;
+end
+
+outputname= (get(handles.edit7,'String'));
+
+Name_File_Export=[Folder,sep,outputname{1}];
+cd(Folder);
+mkdir(Name_File_Export);
+perc = 10;
+waitbar(perc/100,h,sprintf('%d%% along...',perc))
+%% Process Validation to Do
+handles.nl = get(handles.NLCheck,'Value');
+Confirmation_Process_Calculate_Analog=get(handles.checkbox7,'Value');
+Confirmation_Process_Calculate_Stimuli=get(handles.checkbox8,'Value');
+Confirmation_Process_Calculate_STA=get(handles.checkbox10,'Value');
+analogs=0;
+%% Ejecution Process
+% Calculation only Analog Signal
+if Confirmation_Process_Calculate_Analog==1 && Confirmation_Upload_Analog==1
+    mcdfilename=handles.mcdfilename;
+    mcdfilepath=handles.mcdfilepath;
+    analogs=1;
+    % Load mcd file and calculate Synchrony Signal in inicio_fin_frame
+    if handles.analogtxt
+        inicio_fin_frame = load([mcdfilepath,mcdfilename]);
+    else
+        Entity=handles.EntityNumber;
+        [ inicio_fin_frame ] = load_mcd(Sample_Rate,Start_time,End_time,mcdfilename,mcdfilepath,Name_File_Export,Entity);
+    end
+    if length(inicio_fin_frame) < N_Frames
+        N_Frames = length(inicio_fin_frame); % reducing N_frames to fit the stimulus timestamps
+    end
+    
+end
+perc = 20;
+waitbar(perc/100,h,sprintf('%d%% along...',perc))
+
+% Calculation  Stimuli 
+if Confirmation_Upload_Seed_or_Stimuli==1 && Confirmation_Process_Calculate_Stimuli==0
+    stim=handles.Stim;    
+end
+
+% Calculation only Stimuli from seed
+if Confirmation_Process_Calculate_Stimuli==1 && Confirmation_Upload_Seed_or_Stimuli==1
+    stim=handles.Stim;
+    if isstruct(stim)
+        [stim] = stim_from_seed(stim,N_Frames,N_Blocks,outputname{1}, Name_File_Export,sep);
+    else
+        warndlg('The Seed File is not struct','!! Warning !!')
+    end
+    
+end
+% Calculation STA 
+if Confirmation_Process_Calculate_STA==1 && analogs==1 && exist('stim','var') && Confirmation_Upload_Timestamps==1   
+        
+    if length(size(stim)) == 4
+        stim = squeeze(stim(:,:,3,:)); % selects only B channel in case of RGB stimulus
+    end    
+    stim = stim/max(stim(:)) - mean(stim(:)/max(stim(:))); % set stimulus mean to zero
+    if  handles.nex==1
+        nexData=handles.nexFile;
+        [raw]=NexTS2mat(nexData,Sample_Rate);        
+    else        
+        raw.data=handles.nexFile.data;
+        raw.nunits=handles.nexFile.nunits;
+    end
+    raw.stim =stim;
+    raw.ts_stim = inicio_fin_frame;
+    
+    % Converting from timestamps to spikes/frame    
+    [data]=ts2raster(raw,N_Frames); 
+    
+    %% Computing STA
+    [STA_array]= exp_sta(data,data.nunits,N_Blocks,mem);
+    save([Name_File_Export,sep,'STA_array.mat'], 'STA_array');
+    perc = 30;
+    waitbar(perc/100,h,sprintf('%d%% along...',perc))
+    %% Temporal and Spatial filter stimation using SVD
+    [raw_SVD] = STA_SVD(STA_array,data.nunits,N_Blocks,mem);
+     perc = 40;
+    waitbar(perc/100,h,sprintf('%d%% along...',perc))
+    %% Selection of less noisy component
+    [STA_filters] = SVD_filter(raw_SVD,data.nunits); % selects the less noisy component
+     save([Name_File_Export,sep,'STA_filters.mat'], 'STA_filters');
+     perc = 50;
+    waitbar(perc/100,h,sprintf('%d%% along...',perc))
+    %% 2D Gaussian Fit
+    [fitres]=Gaussian2Dfit(STA_filters,data.nunits);
+     save([Name_File_Export,sep,'fitres.mat'], 'fitres');
+    perc = 60;
+    waitbar(perc/100,h,sprintf('%d%% along...',perc))
+    %% Computing NonLinearity
+    if handles.nl
+        [nlData] = ComputeNLfromSTA(data,STA_array,fitres,mem,N_Blocks,1/Sample_Projector);
+        save([Name_File_Export,sep,'NLdata.mat'], 'nlData');
+    end
+    perc = 70;
+    waitbar(perc/100,h,sprintf('%d%% along...',perc))
+    %% Make figures and save them    
+    plot_sta(STA_array,STA_filters,fitres,data.nunits, Name_File_Export,sep); % plots spat, temp and 2D fit of RF.
+    perc = 80;
+    waitbar(perc/100,h,sprintf('%d%% along...',perc))
+    
+    if handles.nl
+        PlotNLfromNIM(nlData, Name_File_Export,sep);
+    end
+    perc = 90;
+    waitbar(perc/100,h,sprintf('%d%% along...',perc))
+    
+    stadoit=1;
+end
+perc = 100;
+waitbar(perc/100,h,sprintf('%d%% along...',perc))
+
+%%%%%%%%%%%%%%%%%%%%% END PRINCIPAL FUNCTION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%% PARAMETERS ANALOG SIGNAL %%%%%%%%%%%%%%%%%%%%%%%%%
+% Start Time
+function edit1_Callback(hObject, eventdata, handles)
+% hObject    handle to edit1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% Hints: get(hObject,'String') returns contents of edit1 as text
+%        str2double(get(hObject,'String')) returns contents of edit1 as a double
+
+% End Time
+function edit2_Callback(hObject, eventdata, handles)
+% hObject    handle to edit2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% Numeber of Frames
+function edit5_Callback(hObject, eventdata, handles)
+% hObject    handle to edit5 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Sample Rate
+function edit6_Callback(hObject, eventdata, handles)
+% hObject    handle to edit6 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Sample Projector
+function edit3_Callback(hObject, eventdata, handles)
+% hObject    handle to edit3 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% Number Block per Image
+function edit4_Callback(hObject, eventdata, handles)
+% hObject    handle to edit4 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% Neuron Memory in Frames
+function edit10_Callback(hObject, eventdata, handles)
+% hObject    handle to edit10 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+%%%%%%%%%%%%%%%%%%%%% END PARAMETERS ANALOG SIGNAL%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%% UPLOAD DATA FILES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Upload Analog File
+% --- Executes on button press in pushbutton4.
+function pushbutton4_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton4 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[FileName,PathName] = uigetfile('*.mcd;*.txt','Select mcd Analog File  or txt file with stim timestamps');
+if strcmp(FileName(end-2:end),'txt')
+    handles.analogtxt = 1;
+    handles.mcdfilename = FileName;
+    handles.mcdfilepath = PathName;
+else
+    handles.analogtxt = 0;
+    handles.mcdfilename = FileName;
+    handles.mcdfilepath = PathName;
+    x = inputdlg('Enter Channel Number of Analog Signal',...
+        'Sample', [1 30]);
+    data = str2double(x{:});
+    handles.EntityNumber = data;
+    
+end
+set(handles.checkbox1,'Value',1);
+set(handles.checkbox1,'String','yes');
+guidata(hObject,handles);
+
+
+% Confirm Upload File Correctly
+% --- Executes on button press in checkbox1.
+function checkbox1_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% Upload Seed or Stimulus File
+% --- Executes on button press in pushbutton5.
+function pushbutton5_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton5 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[FileName,PathName] = uigetfile('*.mat','Select Seed/Stimulus File');
+Stim=load([PathName,FileName]);
+
+if isstruct(eval(['Stim.',char(fieldnames(Stim))]))
+    set(handles.checkbox8,'Value',1);
+    set(handles.checkbox8,'Visible','on');
+    clear handles.Stim
+    handles.Stim=Stim;
+else
+    set(handles.checkbox8,'Value',0);
+    set(handles.checkbox8,'Visible','off');
+    clear handles.Stim
+    handles.Stim=Stim.stim;
+end
+
+set(handles.checkbox2,'Value',1);
+set(handles.checkbox2,'String','yes');
+
+guidata(hObject,handles);
+
+
+% Confirm Upload Seed or Stimulus File Correctly
+% --- Executes on button press in checkbox2.
+function checkbox2_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Data File Timestamps
+% --- Executes on button press in pushbutton6.
+function pushbutton6_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton6 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[FileName,PathName] = uigetfile({'*.nex';'*.txt';'*.mat';'*.hdf5'},'Select file with timestamps of units'); 
+if strcmp(FileName(end),'x') % nex file
+    [nexFile] = readNexFile([PathName,FileName]);
+    handles.nex = 1;
+elseif  strcmp(FileName(end),'5') % hdf5 file
+    handles.nex = 2;
+    [nexFile.data] = loadTSfromHdf5(PathName,FileName,0);
+    nexFile.nunits = size(nexFile.data,2);
+
+elseif  strcmp(FileName(end-1:end),'at') %mat file
+    handles.nex = 2;
+    %   modificado aqui para leer .mat del spyking circus
+    %   ___--------------_---------------------
+    [nexFile] = load([PathName,FileName]); % loading *.mat
+    f = fields(nexFile); % fields of nexFile structure
+    nexFile.data=nexFile.(f{1}); % choosing the first field -> SpikeTimes
+    maxSize = max(cellfun(@numel,nexFile.data)); % max size of timestamps
+    
+    if size(nexFile.data{1},1)==1 % data are in columns
+        nexFile.data=cell2mat(cellfun(@(x)cat(1,x',NaN(maxSize-length(x),1)),nexFile.data,'UniformOutput',false)); %converting to matrix
+    else
+        nexFile.data=cell2mat(cellfun(@(x)cat(1,x,NaN(maxSize-length(x),1)),nexFile.data,'UniformOutput',false)); %converting to matrix
+    end
+    nexFile.data(isnan(nexFile.data))=0; % all nan's to zero
+    nexFile=rmfield(nexFile,f{1});
+    nexFile.nunits = size(nexFile.data,2);
+end
+
+handles.nexFile=nexFile;
+set(handles.checkbox3,'Value',1);
+set(handles.checkbox3,'String','yes');
+guidata(hObject,handles);
+
+% Confirm Upload Data File Correctly
+% --- Executes on button press in checkbox3.
+function checkbox3_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox3 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% Upload STA data File
+% --- Executes on button press in pushbutton8.
+function pushbutton8_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton8 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[FileName,PathName] = uigetfile('*.mat','Select STA data File '); 
+[STAdata] = readNexFile([PathName,FileName]);
+handles.STAdata=STAdata;
+set(handles.checkbox9,'Value',1);
+set(handles.checkbox9,'String','yes');
+guidata(hObject,handles);
+
+
+% Confirm Upload STA data Correctly
+% --- Executes on button press in checkbox9.
+function checkbox9_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox9 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%%%%%%%%%%%%%%%%%%%%%% END UPLOAD DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%% EXPORT INFORMATION DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% Output Folder information
+% --- Executes on button press in pushbutton7.
+function pushbutton7_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton7 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+ruta=uigetdir;
+handles.ruta=ruta;
+set(handles.checkbox11,'Value',1);
+set(handles.checkbox11,'String','yes');
+guidata(hObject,handles);
+
+% --- Executes on button press in checkbox11.
+function checkbox11_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox11 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox11
+
+
+% Name output File
+function edit7_Callback(hObject, eventdata, handles)
+% hObject    handle to edit7 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% handles.edit7=get(hObject,'String');
+guidata(hObject,handles);
+
+
+% Confirmation Calculate and Export Analog Signal 
+% --- Executes on button press in checkbox7.
+function checkbox7_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox7 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Confirmation Calculate and Export Stimulus File 
+% --- Executes on button press in checkbox8.
+function checkbox8_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox8 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Confirmation STA Process
+% --- Executes on button press in checkbox10.
+function checkbox10_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox10 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox10
+% Confirmation Calculate and Export Validation Process
+% --- Executes on button press in checkbox4.
+
+
+function checkbox4_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox4 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% Confirmation Calculate and Export Clustering Process
+% --- Executes on button press in checkbox5.
+function checkbox5_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox5 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% Confirmation Calculate and Export New .NEX FILE
+% --- Executes on button press in checkbox6.
+function checkbox6_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox6 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+
+%%%%%%%%%%%%%%%%%%%% END EXPORT INFORMATION DATA %%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%% EXTRAS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% MENU
+% --------------------------------------------------------------------
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%% END EXTRAS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%% CREATE VISUAL FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%
+
+% --- Executes during object creation, after setting all properties.
+function edit1_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+% --- Executes during object creation, after setting all properties.
+function edit2_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+% --- Executes during object creation, after setting all properties.
+function edit3_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit3 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+% --- Executes during object creation, after setting all properties.
+function edit7_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit7 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+% --- Executes during object creation, after setting all properties.
+function edit6_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit6 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+% --- Executes during object creation, after setting all properties.
+function edit5_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit5 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+% --- Executes during object creation, after setting all properties.
+function edit4_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit4 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function edit10_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit10 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%% END CREATE VISUAL FUNCTIONS %%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END PROGRAM %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% --- Executes on button press in NLCheck.
+function NLCheck_Callback(hObject, eventdata, handles)
+% hObject    handle to NLCheck (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of NLCheck
+handles.nl = get(hObject,'Value');
+guidata(hObject,handles);
